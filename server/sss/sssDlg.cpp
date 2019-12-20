@@ -8,12 +8,27 @@
 #include "afxdialogex.h"
 #include <winsock.h>
 #include <winsock2.h>
- #include<iphlpapi.h>
+#include <iphlpapi.h>
+#include <thread>
+#include <condition_variable>
+#include <mutex> 
+#include <vector>
 #pragma comment(lib,"Iphlpapi.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+// 用于接收客户端消息的类
+class Client
+{
+public:
+	SOCKET sClient;      //客户端套接字
+	char buf[128];		 //数据缓冲区
+	char userName[16];   //客户端用户名
+	char IP[20];		 //客户端IP
+	UINT_PTR flag;       //标记客户端，用来区分不同的客户端
+};
+std::vector<Client>user;//客户端动态数组
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -66,6 +81,7 @@ void CsssDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT1, hostname);
 	DDX_Text(pDX, IDC_EDIT2, adaptername);
 	DDX_Control(pDX, IDC_EDIT2, ListBoxEdit);
+	DDX_Control(pDX, IDC_BUTTON1, Startserverbutton);
 }
 
 BEGIN_MESSAGE_MAP(CsssDlg, CDialogEx)
@@ -164,9 +180,31 @@ HCURSOR CsssDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
+//转发线程
+void ThreadSend(SOCKET ms) {
+	int ret = 0;
+	int flag = 0;
+	int g_iStatus = 0;
+	SOCKET client = INVALID_SOCKET;					//创建一个临时套接字来存放要转发的客户端套接字
+	char temp[128] = { 0 };							//创建一个临时的数据缓冲区，用来存放接收到的数据
+	memcpy(temp, user[!flag].buf, sizeof(temp));
+	sprintf(user[flag].buf, "%s: %s", user[!flag].userName, temp);//添加一个用户名头
 
-
-
+	if (strlen(temp) != 0 && g_iStatus == 0) //如果数据不为空且还没转发则转发
+		ret = send(user[flag].sClient, user[flag].buf, sizeof(user[flag].buf), 0);
+	if (ret == SOCKET_ERROR)
+		return ;
+	g_iStatus = 1;   //转发成功后设置状态为已转发
+	return;
+}
+void ThreadAccept(SOCKET ms) {
+	return;
+}
+void ThreadManager(SOCKET ms) {
+	std::thread thread(ThreadAccept, ms);
+	thread.join();
+	return;
+}
 void CsssDlg::OnBnClickedButton1()
 {
     CString error;
@@ -206,7 +244,7 @@ void CsssDlg::OnBnClickedButton1()
 		return;
     }
 	//设置监听客户端连接数
-	if (SOCKET_ERROR == listen(ms, 5))
+	if (SOCKET_ERROR == listen(ms, 255))
 	{
 		error.Format(_T("客户端连接数过多，错误代码：%d!"), WSAGetLastError());
 		MessageBox(error);
@@ -214,6 +252,8 @@ void CsssDlg::OnBnClickedButton1()
 		WSACleanup();
 		return;
 	}
+	std::thread thread(ThreadManager, ms);
+	thread.detach();//detach自主执行直至结束
 	CString message;
     message.Format(_T("成功创建服务器，代码：%d!"), 1000);
     MessageBox(message);
@@ -227,7 +267,7 @@ void CsssDlg::OnBnClickedButton1()
 	else
 		hostname="未获取到主机名";
 	UpdateData(false);
-
+	GetDlgItem(IDC_BUTTON1)->EnableWindow(FALSE);
 	
 
 }

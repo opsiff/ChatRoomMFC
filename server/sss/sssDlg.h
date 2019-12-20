@@ -38,4 +38,5 @@ public:
 	afx_msg void OnEnChangeEdit2();
 	afx_msg void OnClickedButton2();
 	CEdit ListBoxEdit;
+	CButton Startserverbutton;
 };
