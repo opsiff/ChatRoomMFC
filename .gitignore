@@ -1,0 +1,16 @@
+﻿*.sdf
+*.pch
+*.ilk
+*.suo
+*.obj
+*.manifest
+*.res
+*.lastbuildstate
+*.res
+*.exe
+*.iobj
+*.ipdb
+*.pdb
+*.tlog
+*.log
+*.ipch
