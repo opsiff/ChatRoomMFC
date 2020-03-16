@@ -1,0 +1,10 @@
+
+Successfuuly got a connection from IP:127.0.0.1 ,Port: 61251,UerName: ccc
+
+Begin ThreadRecv
+Successfuuly got a connection from IP:127.0.0.1 ,Port: 61252,UerName: 文涛
+
+Begin ThreadRecv
+Successfuuly got a connection from IP:127.0.0.1 ,Port: 61264,UerName: 关关关
+
+Begin ThreadRecv
